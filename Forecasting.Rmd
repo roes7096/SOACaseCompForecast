@@ -1,0 +1,114 @@
+---
+title: "Forecast"
+author: "Peter Roessler-Caram"
+date: "March 19, 2019"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r, message=FALSE}
+library(readxl)
+library(writexl)
+library(xlsx)
+library(ggplot2)
+library(tidyverse)
+library(tidyquant)
+library(zoo)
+library(forecast)
+library(tseries)
+library(data.table)
+```
+```{r}
+BaseRates <- read_excel("C:/Users/roess/OneDrive/Documents/SOA/SOA Student Case Study/2019/RatesPerCarPerQuarterPerRiskClass.xlsx",sheet="Commercial")
+```
+
+```{r}
+View(BaseRates)
+```
+
+```{r}
+BaseRates <- BaseRates %>% 
+  mutate(DateYQ=as.yearqtr(paste(BaseRates$Yr,BaseRates$Qtr),"%Y %q"))
+ScaleX<-unique(BaseRates$DateYQ)
+```
+```{r}
+BaseRates %>% 
+group_by(DateYQ) %>%
+  ggplot() +
+  geom_area(mapping=aes(x=DateYQ,y=Bodily_Injury, fill = Risk_Class), position= "stack") +
+  scale_x_continuous(ScaleX) +
+  theme(legend.position="right") +
+  labs(title="PerCarPerQuarterPerRiskClass Cost", x= "Year.Quarter", y="Total Claim Cost") +
+  theme_tq()
+```
+
+##Bodily Injury
+```{r}
+temp<- BaseRates %>% 
+  group_by(DateYQ)
+temp <- setDT(temp)[, list(AR = list(auto.arima(Bodily_Injury, seasonal=TRUE))), by = Risk_Class]
+temp[,sapply(AR, function(x) plot(forecast(x,frequency=4)))]
+i<-NULL
+BodForcast<-matrix(NA,nrow=27,ncol=40)
+for (i in 1:27){
+  BodForcast[i,]=temp$AR[[i]][["fitted"]]
+}
+##write.xlsx(BodForcast, file = "Forecast-Commercial.xlsx", sheetName="Bodily Injury")
+```
+##Personal Injury
+```{r}
+temp<- BaseRates %>% 
+  group_by(DateYQ)
+temp <- setDT(temp)[, list(AR = list(auto.arima(Personal_Injury, seasonal=TRUE))), by = Risk_Class]
+temp[,sapply(AR, function(x) plot(forecast(x,frequency=4)))]
+
+i<-NULL
+BodForcast<-matrix(NA,nrow=27,ncol=40)
+for (i in 1:27){
+  BodForcast[i,]=temp$AR[[i]][["fitted"]]
+}
+##write.xlsx(BodForcast, file = "Forecast-Commercial.xlsx", sheetName="Personal Injury", append=TRUE)
+```
+
+##Comprehensive
+```{r}
+temp<- BaseRates %>% 
+  group_by(DateYQ)
+temp <- setDT(temp)[, list(AR = list(auto.arima(Comprehensive, seasonal=TRUE))), by = Risk_Class]
+temp[,sapply(AR, function(x) plot(forecast(x,frequency=4)))]
+
+i<-NULL
+BodForcast<-matrix(NA,nrow=27,ncol=40)
+for (i in 1:27){
+  BodForcast[i,]=temp$AR[[i]][["fitted"]]
+}
+##write.xlsx(BodForcast, file = "Forecast-Commercial.xlsx", sheetName="Comprehensive", append=TRUE)
+```
+##Collision
+```{r}
+temp<- BaseRates %>% 
+  group_by(DateYQ)
+temp <- setDT(temp)[, list(AR = list(auto.arima(Collision, seasonal=TRUE))), by = Risk_Class]
+temp[,sapply(AR, function(x) plot(forecast(x,frequency=4)))]
+i<-NULL
+BodForcast<-matrix(NA,nrow=27,ncol=40)
+for (i in 1:27){
+  BodForcast[i,]=temp$AR[[i]][["fitted"]]
+}
+##write.xlsx(BodForcast, file = "Forecast-Commercial.xlsx", sheetName="Collision", append=TRUE)
+```
+
+##Property Damage
+```{r}
+temp<- BaseRates %>% 
+  group_by(DateYQ)
+temp <- setDT(temp)[, list(AR = list(auto.arima(Property_Damage, seasonal=TRUE))), by = Risk_Class]
+temp[,sapply(AR, function(x) plot(forecast(x,frequency=4)))]
+i<-NULL
+BodForcast<-matrix(NA,nrow=27,ncol=40)
+for (i in 1:27){
+  BodForcast[i,]=temp$AR[[i]][["fitted"]]
+}
+##write.xlsx(BodForcast, file = "Forecast-Commercial.xlsx", sheetName="Property Damage", append=TRUE)
+```
